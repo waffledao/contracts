@@ -7,6 +7,9 @@ import "./Waffle.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract WaffleFactory {
+  // ================ Constants ================
+  uint256 private constant MIN_DURATION = 1 hours; // seems reasonable
+  uint256 private constant MAX_DURATION = 100 days; // capping to protect against raffle's never expiring
   // ============ Immutable storage ============
 
   // Chainlink LINK token
@@ -28,7 +31,8 @@ contract WaffleFactory {
     address indexed nftContract,
     uint256 nftID,
     uint256 slotPrice,
-    uint256 numSlotsAvailable
+    uint256 numSlotsAvailable,
+    uint256 raffleExpiry
   );
 
   // ============ Constructor ============
@@ -51,7 +55,9 @@ contract WaffleFactory {
     address _nftContract,
     uint256 _nftID,
     uint256 _slotPrice,
-    uint256 _numSlotsAvailable
+    uint256 _numSlotsAvailable,
+    uint256 _raffleExpiry
+
   ) external {
     // Require slot price > 0
     require(_slotPrice > 0, "WaffleFactory: Price per slot must be above 0.");
@@ -62,6 +68,10 @@ contract WaffleFactory {
     // Require LINK balance of creator >= Chainlink VRF fee
     require(LINKToken.balanceOf(msg.sender) >= ChainlinkFee, "WaffleFactory: Insufficient LINK.");
 
+    require((_raffleExpiry - MIN_DURATION) >= block.timestamp, "WaffleFactory: Raffle duration must be greater than 1 hour");
+
+    require((_raffleExpiry - block.timestamp) <= MAX_DURATION , "WaffleFactory: Raffle duration must be less than 100 days");
+
     Waffle raffle = new Waffle(
       msg.sender,
       _nftContract,
@@ -71,13 +81,14 @@ contract WaffleFactory {
       ChainlinkFee,
       _nftID,
       _slotPrice,
-      _numSlotsAvailable
+      _numSlotsAvailable,
+      _raffleExpiry
     );
 
     // Transfer LINK fee to waffle contract
     LINKToken.transferFrom(msg.sender, address(raffle), ChainlinkFee);
 
     // Emit creation event
-    emit WaffleCreated(address(raffle), msg.sender, _nftContract, _nftID, _slotPrice, _numSlotsAvailable);
+    emit WaffleCreated(address(raffle), msg.sender, _nftContract, _nftID, _slotPrice, _numSlotsAvailable, _raffleExpiry);
   }
 }
