@@ -16,10 +16,16 @@ Edit the necessary RPC endpoints and private keys in `hardhat.config.js`. It is 
 
 ```bash
 # Install dependencies
-npm install
+yarn
 
 # Run tests
-npx hardhat test
+yarn run test
+
+# Compile
+yarn run compile
+
+# Clean
+yarn run clean
 ```
 
 ## Status
