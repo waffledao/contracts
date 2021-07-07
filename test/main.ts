@@ -1,5 +1,7 @@
-const { expect } = require("chai");
+import { expect } from './setup'
 const { network } = require("hardhat");
+import { ethers } from 'hardhat'
+
 
 // Setup global variables
 const KOVAN_RPC = "";
@@ -20,7 +22,7 @@ async function deploy() {}
  */
 async function impersonateSigner(account) {
   // Impersonate account
-  await hre.network.provider.request({
+  await network.provider.request({
     method: "hardhat_impersonateAccount",
     params: [account],
   });

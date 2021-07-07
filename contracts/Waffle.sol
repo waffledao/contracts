@@ -24,7 +24,8 @@ contract Waffle is VRFConsumerBase, IERC721Receiver {
   address public immutable nftContract;
   // NFT ID
   uint256 public immutable nftID;
-
+  // Assuming immutable raffle expiration
+  uint256 public immutable raffleExpiry;
   // ============ Mutable storage ============
 
   // Result from Chainlink VRF
@@ -60,7 +61,8 @@ contract Waffle is VRFConsumerBase, IERC721Receiver {
     uint256 _ChainlinkFee,
     uint256 _nftID,
     uint256 _slotPrice, 
-    uint256 _numSlotsAvailable
+    uint256 _numSlotsAvailable,
+    uint256 _raffleExpiry
   ) VRFConsumerBase(
     _ChainlinkVRFCoordinator,
     _ChainlinkLINKToken
@@ -72,6 +74,7 @@ contract Waffle is VRFConsumerBase, IERC721Receiver {
     nftID = _nftID;
     slotPrice = _slotPrice;
     numSlotsAvailable = _numSlotsAvailable;
+    raffleExpiry = _raffleExpiry;
   }
 
   // ============ Functions ============
@@ -92,6 +95,9 @@ contract Waffle is VRFConsumerBase, IERC721Receiver {
     require(msg.value == _numSlots * slotPrice, "Waffle: Insufficient ETH provided to purchase slots.");
     // Require number of slots to purchase to be <= number of available slots
     require(_numSlots <= numSlotsAvailable - numSlotsFilled, "Waffle: Requesting to purchase too many slots.");
+    
+    require(raffleExpiry >= block.timestamp, "Waffle: The raffle has expired");
+
 
     // For each _numSlots
     for (uint256 i = 0; i < _numSlots; i++) {
@@ -119,6 +125,9 @@ contract Waffle is VRFConsumerBase, IERC721Receiver {
     require(randomResultRequested == false, "Waffle: Cannot refund slot after winner has been chosen.");
     // Require number of slots owned by address to be >= _numSlots requested for refund
     require(addressToSlotsOwned[msg.sender] >= _numSlots, "Waffle: Address does not own number of requested slots.");
+
+    // should we allow refunds from an expired raffle that hasn't selected a winner??
+    //require(raffleExpiry >= block.timestamp, "Waffle: The raffle has expired use collect random winner");
 
     // Delete slots
     uint256 idx = 0;
@@ -153,12 +162,16 @@ contract Waffle is VRFConsumerBase, IERC721Receiver {
    * Collects randomness from Chainlink VRF to propose a winner.
    */
   function collectRandomWinner() external returns (bytes32 requestId) {
+    // instead of requiring owner, allow this to be called if slots are filled or expiration has hit (partial raffle)
+    require(_checkSlotsFilledOrExpired(), "Waffle: all slots must be filled to decide the winner before expiration");
+
     // Require at least 1 raffle slot to be filled
     require(numSlotsFilled > 0, "Waffle: No slots are filled");
     // Require NFT to be owned by raffle contract
     require(nftOwned == true, "Waffle: Contract does not own raffleable NFT.");
-    // Require caller to be raffle deployer
-    require(msg.sender == owner, "Waffle: Only owner can call winner collection.");
+
+    // COMMENTED NEXT LINE OUT (see first require)
+    // require(msg.sender == owner, "Waffle: Only owner can call winner collection.");
     // Require this to be the first time that randomness is requested
     require(randomResultRequested == false, "Waffle: Cannot collect winner twice.");
 
@@ -167,6 +180,13 @@ contract Waffle is VRFConsumerBase, IERC721Receiver {
 
     // Call for random number
     return requestRandomness(keyHash, fee);
+  }
+  
+  function _checkSlotsFilledOrExpired() private view returns (bool) {
+    if (numSlotsFilled == numSlotsAvailable || block.timestamp >= raffleExpiry) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -214,6 +234,10 @@ contract Waffle is VRFConsumerBase, IERC721Receiver {
     require(nftOwned == true, "Waffle: Cannot cancel raffle without raffleable NFT.");
     // Require that a winner has not been collected already
     require(randomResultRequested == false, "Waffle: Cannot delete raffle after collecting winner.");
+
+    // inverting check for expiration and slots filled. Seems unfair to delete the raffle after people
+    // have filled the slots or the expiration has been hit
+    require(!_checkSlotsFilledOrExpired(), "Waffle: cannot delete raffle after expiration or slots filled");
 
     // Transfer NFT to original owner
     IERC721(nftContract).safeTransferFrom(address(this), msg.sender, nftID);

@@ -16,10 +16,16 @@ Edit the necessary RPC endpoints and private keys in `hardhat.config.js`. It is 
 
 ```bash
 # Install dependencies
-npm install
+yarn
 
 # Run tests
-npx hardhat test
+yarn run test
+
+# Compile
+yarn run compile
+
+# Clean
+yarn run clean
 ```
 
 ## Status
@@ -38,7 +44,7 @@ npx hardhat test
 
 1. Extension: Can include an automatic raffle timestamp to force a raffle to occur, regardless of whether a NFT owner chooses or not. Or, can remove the ability to delete a raffle.
 2. Limitation: When too many slots are filled, you can hit the upper limit for gas on successive `transfer` calls when deleting a raffle.
-
+3. Extension: use a duration instead of an expiration date that starts counting down when the first slot is purchased.
 ## Credits
 
 [Freepik](https://www.flaticon.com/free-icon/stroopwafel_3531066?term=waffle&page=1&position=3&page=1&position=3&related_id=3531066&origin=search#) for the icon.
