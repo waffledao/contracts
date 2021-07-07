@@ -3,7 +3,7 @@ import { HardhatUserConfig } from 'hardhat/types'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-solhint';
-// import '@typechain/hardhat'
+import '@typechain/hardhat'
 
 dotenv.config();
 
@@ -18,10 +18,10 @@ const config: HardhatUserConfig = {
       }
     }
   },
-  // typechain: {
-  //   outDir: 'ts-types/contracts',
-  //   target: 'ethers-v5'
-  // },
+  typechain: {
+    outDir: 'ts-types/contracts',
+    target: 'ethers-v5'
+  },
   networks: {
     ropsten: {
       url: `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
