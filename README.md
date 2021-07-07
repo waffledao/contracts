@@ -3,7 +3,7 @@
 Waffle is a simple primitive for NFT raffles inspired by [Jon Itzler](https://twitter.com/jonitzler/status/1408472539182120967).
 
 1. NFT Owners can specify the number of available raffle slots, and price per slot.
-2. Entrants can deposit and withdraw until all slots are filled.
+2. Entrants can buy slots and can request for a refund if raffle gets expired.
 3. Owners can raffle the NFT and select a winner at any point (slots filled or not).
 
 Additionally:
